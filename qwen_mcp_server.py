@@ -13,28 +13,27 @@ QWEN_API_KEY = "sk-YOUR-ACTUAL-API-KEY-HERE"  # <--- 在这里填入你的真实
 
 TOOL_NAME = "analyze_image_with_qwen"
 
-# --- (新) 全局工具定义 ---
+# --- (新) 全局工具定义 (符合 MCP ListToolsResult 规范) ---
 # 将我们的工具定义为一个全局变量，以便 'tools/list' 可以使用它
 QWEN_TOOL_LIST = [
     {
-        "type": "function",
-        "function": {
-            "name": TOOL_NAME,
-            "description": "使用 Qwen3-VL 模型分析和理解图片。当你需要描述图片内容、回答关于图片的问题或识别图中物体时使用。",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "prompt": {
-                        "type": "string",
-                        "description": "向 Qwen-VL 提出的问题或提示词 (例如: '这张图片里有什么？', '描述一下这个场景。')"
-                    },
-                    "image_url": {
-                        "type": "string",
-                        "description": "要分析的图片的 URL 或本地文件路径 (例如 'https://example.com/img.png', 'file:///tmp/image.jpg' 或 '/tmp/image.jpg')"
-                    }
+        "name": TOOL_NAME,
+        "description": "使用 Qwen3-VL 模型分析和理解图片。当你需要描述图片内容、回答关于图片的问题或识别图中物体时使用。",
+
+        # 键名从 "parameters" (OpenAI 格式) 变为 "inputSchema" (MCP 格式)
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "prompt": {
+                    "type": "string",
+                    "description": "向 Qwen-VL 提出的问题或提示词 (例如: '这张图片里有什么？', '描述一下这个场景。')"
                 },
-                "required": ["prompt", "image_url"]
-            }
+                "image_url": {
+                    "type": "string",
+                    "description": "要分析的图片的 URL 或本地文件路径 (例如 'https://example.com/img.png', 'file:///tmp/image.jpg' 或 '/tmp/image.jpg')"
+                }
+            },
+            "required": ["prompt", "image_url"]
         }
     }
 ]
@@ -161,19 +160,48 @@ def main():
                     # 响应 OpenHands 的 call_tool 请求
                     try:
                         tool_name = request["params"].get("name")
-                        tool_input = request["params"].get("input", {})
+
+                        # --- (关键修复) ---
+                        # OpenHands 客户端发送 'arguments'，但标准 MCP 可能发送 'input'
+                        # 我们同时检查这两个键，以确保兼容性
+                        tool_input = request["params"].get("input") or request["params"].get("arguments") or {}
+                        # --- (修复结束) ---
+
                         if tool_name != TOOL_NAME:
                             raise ValueError(f"未知的工具名称: {tool_name}")
+
                         prompt = tool_input.get("prompt")
                         image_url = tool_input.get("image_url")
+
                         if not prompt or not image_url:
-                            raise ValueError("缺少 'prompt' 或 'image_url' 参数")
+                            raise ValueError(f"缺少 'prompt' 或 'image_url' 参数。收到: {tool_input}")
 
                         result_content = call_qwen_vl_api(prompt, image_url)
+
+                        # 我们的响应 {"content": "..."} 是符合 CallToolResult 规范的
                         send_jsonrpc_response(request_id, {"content": result_content})
 
                     except Exception as e:
                         send_jsonrpc_error(request_id, -32000, f"Tool execution error: {e}")
+
+
+                # elif method == "call_tool":
+                #     # 响应 OpenHands 的 call_tool 请求
+                #     try:
+                #         tool_name = request["params"].get("name")
+                #         tool_input = request["params"].get("input", {})
+                #         if tool_name != TOOL_NAME:
+                #             raise ValueError(f"未知的工具名称: {tool_name}")
+                #         prompt = tool_input.get("prompt")
+                #         image_url = tool_input.get("image_url")
+                #         if not prompt or not image_url:
+                #             raise ValueError("缺少 'prompt' 或 'image_url' 参数")
+                #
+                #         result_content = call_qwen_vl_api(prompt, image_url)
+                #         send_jsonrpc_response(request_id, {"content": result_content})
+                #
+                #     except Exception as e:
+                #         send_jsonrpc_error(request_id, -32000, f"Tool execution error: {e}")
 
                 elif method:
                     # 收到未知的 method
