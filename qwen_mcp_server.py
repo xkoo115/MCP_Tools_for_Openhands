@@ -167,8 +167,20 @@ def main():
 
             request = json.loads(line)
 
-            if request.get("method") == "call_tool":
-                request_id = request["id"]
+            request_id = request.get("id")
+            method = request.get("method")
+
+            # --- 这是新增的修复逻辑 ---
+            if method == "initialize":
+                # OpenHands 发送了一个初始化请求, 我们必须回复它
+                response = {
+                    "id": request_id,  # 确保回复的 ID 与请求的 ID 一致 (这里是 0)
+                    "result": {"status": "success", "message": "Initialized Qwen VL server"}
+                }
+                send_message(response)
+            # --- 修复逻辑结束 ---
+
+            elif method == "call_tool":
                 tool_name = request["params"].get("name")
                 tool_input = request["params"].get("input", {})
 
@@ -181,12 +193,13 @@ def main():
                             raise ValueError("缺少 'prompt' 或 'image_url' 参数")
 
                         # 核心：调用 API
+                        # 确保你的 call_qwen_vl_api 正在使用你硬编码的 Key
                         result = call_qwen_vl_api(prompt, image_url)
 
                         # 向 OpenHands 发回成功结果
                         response = {
                             "id": request_id,
-                            "result": {"content": result}  # 结果必须是 {"content": "..."} 格式
+                            "result": {"content": result}
                         }
                     except Exception as e:
                         # 向 OpenHands 发回错误
@@ -203,6 +216,59 @@ def main():
         # 记录未捕获的异常
         error_msg = {"id": -1, "error": {"code": -32001, "message": f"服务器内部错误: {e}"}}
         send_message(error_msg)
+
+
+# def main():
+#     # 1. MCP 握手
+#     send_message({"mcp": "0.1.0"})
+#
+#     # 2. 发送工具能力
+#     send_capabilities()
+#
+#     # 3. 循环监听来自 OpenHands 的请求
+#     try:
+#         for line in sys.stdin:
+#             if not line:
+#                 break
+#
+#             request = json.loads(line)
+#
+#             if request.get("method") == "call_tool":
+#                 request_id = request["id"]
+#                 tool_name = request["params"].get("name")
+#                 tool_input = request["params"].get("input", {})
+#
+#                 if tool_name == TOOL_NAME:
+#                     try:
+#                         prompt = tool_input.get("prompt")
+#                         image_url = tool_input.get("image_url")
+#
+#                         if not prompt or not image_url:
+#                             raise ValueError("缺少 'prompt' 或 'image_url' 参数")
+#
+#                         # 核心：调用 API
+#                         result = call_qwen_vl_api(prompt, image_url)
+#
+#                         # 向 OpenHands 发回成功结果
+#                         response = {
+#                             "id": request_id,
+#                             "result": {"content": result}  # 结果必须是 {"content": "..."} 格式
+#                         }
+#                     except Exception as e:
+#                         # 向 OpenHands 发回错误
+#                         response = {
+#                             "id": request_id,
+#                             "error": {"code": -32000, "message": str(e)}
+#                         }
+#
+#                     send_message(response)
+#
+#     except KeyboardInterrupt:
+#         pass
+#     except Exception as e:
+#         # 记录未捕获的异常
+#         error_msg = {"id": -1, "error": {"code": -32001, "message": f"服务器内部错误: {e}"}}
+#         send_message(error_msg)
 
 
 if __name__ == "__main__":
