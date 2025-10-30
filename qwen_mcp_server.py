@@ -13,27 +13,28 @@ QWEN_API_KEY = "sk-YOUR-ACTUAL-API-KEY-HERE"  # <--- 在这里填入你的真实
 
 TOOL_NAME = "analyze_image_with_qwen"
 
-# --- (新) 全局工具定义 (符合 MCP ListToolsResult 规范) ---
-# 将我们的工具定义为一个全局变量，以便 'tools/list' 可以使用它
+# --- (新) 全局工具定义 (强制使用 Base64) ---
 QWEN_TOOL_LIST = [
     {
         "name": TOOL_NAME,
-        "description": "使用 Qwen3-VL 模型分析和理解图片。当你需要描述图片内容、回答关于图片的问题或识别图中物体时使用。",
+        # (关键修改 1) 更新描述，告诉 LLM 它必须提供 Base64
+        "description": "使用 Qwen3-VL 模型分析和理解图片。图片必须作为 Base64 编码的 Data URI 字符串提供。",
 
-        # 键名从 "parameters" (OpenAI 格式) 变为 "inputSchema" (MCP 格式)
         "inputSchema": {
             "type": "object",
             "properties": {
                 "prompt": {
                     "type": "string",
-                    "description": "向 Qwen-VL 提出的问题或提示词 (例如: '这张图片里有什么？', '描述一下这个场景。')"
+                    "description": "向 Qwen-VL 提出的问题或提示词 (例如: '这张图片里有什么？')"
                 },
-                "image_url": {
+                # (关键修改 2) 更改参数名和描述
+                "image_data_uri": {
                     "type": "string",
-                    "description": "要分析的图片的 URL 或本地文件路径 (例如 'https://example.com/img.png', 'file:///tmp/image.jpg' 或 '/tmp/image.jpg')"
+                    "description": "图片的 Base64 编码的 Data URI (例如: 'data:image/png;base64,iVBORw0KG...')。不要使用本地文件路径。"
                 }
             },
-            "required": ["prompt", "image_url"]
+            # (关键修改 3) 更新 required 字段
+            "required": ["prompt", "image_data_uri"]
         }
     }
 ]
@@ -85,17 +86,25 @@ def encode_image_to_base64(image_path_or_url):
         raise Exception(f"处理图片路径失败: {image_path_or_url}. 错误: {e}")
 
 
-def call_qwen_vl_api(prompt, image_url):
+# (关键修改 6) 更改参数名，使其与新定义一致
+def call_qwen_vl_api(prompt, image_data_uri):
+    """
+    调用 Qwen3_VL API。
+    """
     if not QWEN_API_KEY or not QWEN_API_URL:
         raise ValueError("QWEN_API_KEY 或 QWEN_API_URL 未在脚本中设置")
-    encoded_image_url = encode_image_to_base64(image_url)
+
+    # (关键修改 7)
+    # 我们的 encode_image_to_base64 函数已经可以处理 'data:image/...' 字符串了
+    # 它会直接返回 image_data_uri，这正是我们想要的！
+    encoded_image_url = encode_image_to_base64(image_data_uri)
+
     payload = {
         "model": "qwen-vl-plus",
-        "input": {"messages": [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url",
-                                                                                               "image_url": {
-                                                                                                   "url": encoded_image_url}}]}]},
+        "input": {"messages": [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": encoded_image_url}}]}]},
         "parameters": {"result_format": "message"}
     }
+    # ... 后续不变 ...
     headers = {"Authorization": f"Bearer {QWEN_API_KEY}", "Content-Type": "application/json"}
     response = requests.post(QWEN_API_URL, json=payload, headers=headers)
     response.raise_for_status()
@@ -109,6 +118,31 @@ def call_qwen_vl_api(prompt, image_url):
         elif isinstance(text_response, str):
             return text_response
     raise Exception(f"无法从 Qwen API 响应中解析出文本内容: {result}")
+
+# def call_qwen_vl_api(prompt, image_url):
+#     if not QWEN_API_KEY or not QWEN_API_URL:
+#         raise ValueError("QWEN_API_KEY 或 QWEN_API_URL 未在脚本中设置")
+#     encoded_image_url = encode_image_to_base64(image_url)
+#     payload = {
+#         "model": "qwen-vl-plus",
+#         "input": {"messages": [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url",
+#                                                                                                "image_url": {
+#                                                                                                    "url": encoded_image_url}}]}]},
+#         "parameters": {"result_format": "message"}
+#     }
+#     headers = {"Authorization": f"Bearer {QWEN_API_KEY}", "Content-Type": "application/json"}
+#     response = requests.post(QWEN_API_URL, json=payload, headers=headers)
+#     response.raise_for_status()
+#     result = response.json()
+#     if result.get("output", {}).get("choices"):
+#         text_response = result["output"]["choices"][0]["message"]["content"]
+#         if isinstance(text_response, list):
+#             for part in text_response:
+#                 if part.get("type") == "text":
+#                     return part["text"]
+#         elif isinstance(text_response, str):
+#             return text_response
+#     raise Exception(f"无法从 Qwen API 响应中解析出文本内容: {result}")
 
 
 # ==============================================================================
@@ -156,48 +190,60 @@ def main():
                     # OpenHands 正在请求工具列表
                     send_jsonrpc_response(request_id, {"tools": QWEN_TOOL_LIST})
 
-                elif method == "call_tool":
-                    # 响应 OpenHands 的 call_tool 请求
+                # ... 保持 main() 函数的其他部分不变 ...
+
+                elif method == "tools/call":
+                    # 响应 OpenHands 的 tools/call 请求
                     try:
                         tool_name = request["params"].get("name")
 
-                        # --- (关键修复) ---
-                        # OpenHands 客户端发送 'arguments'，但标准 MCP 可能发送 'input'
-                        # 我们同时检查这两个键，以确保兼容性
                         tool_input = request["params"].get("input") or request["params"].get("arguments") or {}
-                        # --- (修复结束) ---
 
                         if tool_name != TOOL_NAME:
                             raise ValueError(f"未知的工具名称: {tool_name}")
 
                         prompt = tool_input.get("prompt")
-                        image_url = tool_input.get("image_url")
 
-                        if not prompt or not image_url:
-                            raise ValueError(f"缺少 'prompt' 或 'image_url' 参数。收到: {tool_input}")
+                        # (关键修改 4) 读取新的参数名
+                        image_uri = tool_input.get("image_data_uri")
 
-                        result_content = call_qwen_vl_api(prompt, image_url)
+                        if not prompt or not image_uri:
+                            # 更新错误信息
+                            raise ValueError(f"缺少 'prompt' 或 'image_data_uri' 参数。收到: {tool_input}")
 
-                        # 我们的响应 {"content": "..."} 是符合 CallToolResult 规范的
+                        # (关键修改 5) 将新的参数传递给 API 函数
+                        result_content = call_qwen_vl_api(prompt, image_uri)
+
                         send_jsonrpc_response(request_id, {"content": result_content})
 
                     except Exception as e:
                         send_jsonrpc_error(request_id, -32000, f"Tool execution error: {e}")
 
+                # ... 保持 main() 函数的其余部分不变 ...
 
-                # elif method == "call_tool":
+                # elif method == "tools/call":
                 #     # 响应 OpenHands 的 call_tool 请求
                 #     try:
                 #         tool_name = request["params"].get("name")
-                #         tool_input = request["params"].get("input", {})
+                #
+                #         # --- (关键修复) ---
+                #         # OpenHands 客户端发送 'arguments'，但标准 MCP 可能发送 'input'
+                #         # 我们同时检查这两个键，以确保兼容性
+                #         tool_input = request["params"].get("input") or request["params"].get("arguments") or {}
+                #         # --- (修复结束) ---
+                #
                 #         if tool_name != TOOL_NAME:
                 #             raise ValueError(f"未知的工具名称: {tool_name}")
+                #
                 #         prompt = tool_input.get("prompt")
                 #         image_url = tool_input.get("image_url")
+                #
                 #         if not prompt or not image_url:
-                #             raise ValueError("缺少 'prompt' 或 'image_url' 参数")
+                #             raise ValueError(f"缺少 'prompt' 或 'image_url' 参数。收到: {tool_input}")
                 #
                 #         result_content = call_qwen_vl_api(prompt, image_url)
+                #
+                #         # 我们的响应 {"content": "..."} 是符合 CallToolResult 规范的
                 #         send_jsonrpc_response(request_id, {"content": result_content})
                 #
                 #     except Exception as e:
