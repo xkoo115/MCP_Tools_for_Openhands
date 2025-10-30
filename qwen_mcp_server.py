@@ -179,7 +179,6 @@ def send_capabilities():
     # 作为“通知”发送 (没有 id)
     send_jsonrpc_notification("set_capabilities", capabilities_params)
 
-
 def main():
     """
     (重构) 主事件循环，使用 JSON-RPC 辅助函数。
@@ -188,6 +187,7 @@ def main():
     send_raw_message({"mcp": "0.1.0"})
 
     # 2. 发送工具能力 (作为 JSON-RPC 通知)
+    # 这一步是告诉 OpenHands 我们有什么工具
     send_capabilities()
 
     # 3. 循环监听来自 OpenHands 的 JSON-RPC 请求
@@ -199,7 +199,6 @@ def main():
             try:
                 request = json.loads(line)
             except json.JSONDecodeError:
-                # 收到无效的 JSON
                 send_jsonrpc_error(-1, -32700, "Parse error: Invalid JSON received")
                 continue
 
@@ -207,14 +206,35 @@ def main():
             method = request.get("method")
 
             if method == "initialize":
-                # 响应 OpenHands 的 initialize 握手请求
+                # --- 这是关键修复 ---
+                # OpenHands 期望的 InitializeResult 结构
+
+                # 从 OpenHands 的请求中获取它支持的协议版本
+                # (日志显示它发送的是 "2025-03-26")
+                client_protocol_version = request.get("params", {}).get("protocolVersion", "2025-03-26")
+
+                compliant_result = {
+                    "protocolVersion": client_protocol_version,  # 同意使用客户端提议的协议版本
+                    "serverInfo": {
+                        "name": "Qwen-VL-MCP-Server",
+                        "version": "1.0.0"
+                    },
+                    "capabilities": {
+                        # 这里的 capabilities 是指协议层面的能力，
+                        # 而不是我们的 'tools' (工具已经在 set_capabilities 中发送了)
+                        # 发送一个空对象是安全的，因为我们只要求 'tools'
+                    }
+                }
+
+                # 回复 OpenHands 的 initialize 握手请求
                 send_jsonrpc_response(
                     request_id,
-                    {"status": "success", "message": "Initialized Qwen VL server"}
+                    compliant_result  # <--- 使用这个符合规范的 result
                 )
+                # --- 修复结束 ---
 
             elif method == "call_tool":
-                # 响应 OpenHands 的 call_tool 请求
+                # (这部分代码保持不变)
                 try:
                     tool_name = request["params"].get("name")
                     tool_input = request["params"].get("input", {})
@@ -228,27 +248,94 @@ def main():
                     if not prompt or not image_url:
                         raise ValueError("缺少 'prompt' 或 'image_url' 参数")
 
-                    # 核心：调用 API
                     result_content = call_qwen_vl_api(prompt, image_url)
 
-                    # 发送成功响应
                     send_jsonrpc_response(request_id, {"content": result_content})
 
                 except Exception as e:
-                    # 发送工具执行期间的错误响应
                     send_jsonrpc_error(request_id, -32000, f"Tool execution error: {e}")
 
             elif method:
-                # 收到未知的 method
                 send_jsonrpc_error(request_id, -32601, f"Method not found: {method}")
 
     except KeyboardInterrupt:
-        # 干净地退出
         pass
     except Exception as e:
-        # 捕获任何意外的服务器崩溃
         send_jsonrpc_error(-1, -32001, f"Internal server error: {e}")
 
 
 if __name__ == "__main__":
     main()
+
+# def main():
+#     """
+#     (重构) 主事件循环，使用 JSON-RPC 辅助函数。
+#     """
+#     # 1. 发送 MCP 协议版本 (这不是 JSON-RPC)
+#     send_raw_message({"mcp": "0.1.0"})
+#
+#     # 2. 发送工具能力 (作为 JSON-RPC 通知)
+#     send_capabilities()
+#
+#     # 3. 循环监听来自 OpenHands 的 JSON-RPC 请求
+#     try:
+#         for line in sys.stdin:
+#             if not line:
+#                 break
+#
+#             try:
+#                 request = json.loads(line)
+#             except json.JSONDecodeError:
+#                 # 收到无效的 JSON
+#                 send_jsonrpc_error(-1, -32700, "Parse error: Invalid JSON received")
+#                 continue
+#
+#             request_id = request.get("id")
+#             method = request.get("method")
+#
+#             if method == "initialize":
+#                 # 响应 OpenHands 的 initialize 握手请求
+#                 send_jsonrpc_response(
+#                     request_id,
+#                     {"status": "success", "message": "Initialized Qwen VL server"}
+#                 )
+#
+#             elif method == "call_tool":
+#                 # 响应 OpenHands 的 call_tool 请求
+#                 try:
+#                     tool_name = request["params"].get("name")
+#                     tool_input = request["params"].get("input", {})
+#
+#                     if tool_name != TOOL_NAME:
+#                         raise ValueError(f"未知的工具名称: {tool_name}")
+#
+#                     prompt = tool_input.get("prompt")
+#                     image_url = tool_input.get("image_url")
+#
+#                     if not prompt or not image_url:
+#                         raise ValueError("缺少 'prompt' 或 'image_url' 参数")
+#
+#                     # 核心：调用 API
+#                     result_content = call_qwen_vl_api(prompt, image_url)
+#
+#                     # 发送成功响应
+#                     send_jsonrpc_response(request_id, {"content": result_content})
+#
+#                 except Exception as e:
+#                     # 发送工具执行期间的错误响应
+#                     send_jsonrpc_error(request_id, -32000, f"Tool execution error: {e}")
+#
+#             elif method:
+#                 # 收到未知的 method
+#                 send_jsonrpc_error(request_id, -32601, f"Method not found: {method}")
+#
+#     except KeyboardInterrupt:
+#         # 干净地退出
+#         pass
+#     except Exception as e:
+#         # 捕获任何意外的服务器崩溃
+#         send_jsonrpc_error(-1, -32001, f"Internal server error: {e}")
+#
+#
+# if __name__ == "__main__":
+#     main()
