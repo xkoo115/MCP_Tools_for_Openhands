@@ -2,16 +2,86 @@
 import sys
 import json
 import os
-import requests  # (确保 requests 已导入)
+import requests  # (V5 需要)
 import base64
 import mimetypes
 import time
 from urllib.parse import urlparse
 from openai import OpenAI
 
+# --- Qwen3_VL API 配置 ---
+# 优先从环境变量获取，如果失败，则使用默认的北京地域 URL
+# 确保您的 API Key 与此地域匹配。
+QWEN_API_KEY = os.getenv("DASHSCOPE_API_KEY", "sk-YOUR-ACTUAL-API-KEY-HERE")
+QWEN_BASE_URL = os.getenv("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
 
-# ... (所有配置, TOOL_NAME, MAX_RETRIES, RETRY_DELAY_SECONDS, QWEN_TOOL_LIST 保持不变) ...
-# ... (JSON-RPC 辅助函数 send_raw_message, send_jsonrpc_response, send_jsonrpc_error 保持不变) ...
+TOOL_NAME = "analyze_image_with_qwen"
+
+# --- 重试常量 ---
+MAX_RETRIES = 3  # 总共尝试 3 次
+RETRY_DELAY_SECONDS = 3  # 每次重试前等待 3 秒
+
+# --- 工具定义 (不变) ---
+QWEN_TOOL_LIST = [
+    {
+        "name": TOOL_NAME,
+
+        # OpenHands LLM 看到的指令
+        "description": (
+            "使用 Qwen-VL 模型分析和理解图片。此工具只接受**公网可访问的 URL**。\n"
+            "**重要指令**：如果图片是本地文件路径 (例如 /app/workspace/image.png)，"
+            "您**必须**先使用 'shell' 工具将其上传到公共图床，"
+            "然后再用返回的 URL 调用此工具。\n"
+            "上传命令示例: \n"
+            "curl -s -F \"reqtype=fileupload\" -F \"fileToUpload=@/app/workspace/image.png\" https://catbox.moe/user/api.php"
+        ),
+
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "prompt": {
+                    "type": "string",
+                    "description": "向 Qwen-VL 提出的问题或提示词 (例如: '这张图片里有什么？')"
+                },
+                "image_url": {
+                    "type": "string",
+                    "description": (
+                        "图片的**公网 URL**。这必须是 http://, https:// 或 data:image//... 格式。"
+                        "**请勿**传入本地文件路径 (如 /app/workspace/...)。"
+                        "请遵循工具主描述中的上传指令。"
+                    )
+                }
+            },
+            "required": ["prompt", "image_url"]
+        }
+    }
+]
+
+
+# ==============================================================================
+# JSON-RPC 2.0 辅助函数 (不变)
+# ==============================================================================
+
+def send_raw_message(message):
+    """向 stdout 发送原始 JSON 消息"""
+    try:
+        sys.stdout.write(json.dumps(message) + '\n')
+        sys.stdout.flush()
+    except IOError as e:
+        sys.stderr.write(f"[ERROR] Error writing to stdout: {e}\n")
+        sys.stderr.flush()
+
+
+def send_jsonrpc_response(request_id, result):
+    """发送 JSON-RPC 成功响应"""
+    response = {"jsonrpc": "2.0", "id": request_id, "result": result}
+    send_raw_message(response)
+
+
+def send_jsonrpc_error(request_id, code, message):
+    """发送 JSON-RPC 错误响应"""
+    response = {"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}}
+    send_raw_message(response)
 
 
 # ==============================================================================
@@ -27,31 +97,31 @@ def encode_image_to_base64(image_path_or_url):
     - 如果是 Data URI, 直接返回。
     """
     try:
-        # 1. 检查是否为 HTTP/HTTPS URL
+        # 1. 检查是否为 HTTP/HTTPS URL (服务器自行下载)
         if urlparse(image_path_or_url).scheme in ['http', 'https']:
             sys.stderr.write(f"[INFO] 检测到公网 URL，服务器正在自行下载: {image_path_or_url[:70]}...\n")
             sys.stderr.flush()
 
-            # (新) 伪装成浏览器去下载，防止被 403
+            # 伪装成浏览器去下载，防止被 403
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
 
             try:
-                # (新) 下载图片内容
+                # 下载图片内容
                 response = requests.get(image_path_or_url, timeout=15, headers=headers)
                 response.raise_for_status()  # 检查 4xx/5xx 错误
 
                 content = response.content
                 mime_type = response.headers.get('Content-Type', 'application/octet-stream')
 
-                # (新) 验证下载的是否真的是图片
+                # 验证下载的是否真的是图片 (防止下载到 HTML 错误页)
                 if not mime_type.startswith('image/'):
                     sys.stderr.write(f"[ERROR] 下载的文件不是图片! Content-Type: {mime_type}\n")
                     sys.stderr.flush()
                     raise ValueError(f"下载的文件不是图片 (可能是 HTML 错误页)。Content-Type: {mime_type}")
 
-                # (新) 编码为 Base64 Data URI
+                # 编码为 Base64 Data URI
                 encoded_string = base64.b64encode(content).decode('utf-8')
                 data_uri = f"data:{mime_type};base64,{encoded_string}"
 
@@ -73,6 +143,7 @@ def encode_image_to_base64(image_path_or_url):
         elif os.path.exists(image_path_or_url):
             local_path = image_path_or_url
         else:
+            # 如果 Agent 仍然错误地传入 /app/workspace/...，会在这里失败
             raise ValueError(f"路径既不是 URL 也不是有效的本地文件: {image_path_or_url}。"
                              "请确保 Agent 提供了公网 URL。")
 
@@ -90,23 +161,22 @@ def encode_image_to_base64(image_path_or_url):
 
 
 # ==============================================================================
-# API 调用函数 (V4 的重试逻辑保持不变, V5 的修改会自动生效)
+# API 调用函数 (带重试逻辑)
 # ==============================================================================
 
 def call_qwen_vl_api(prompt, image_path_or_url):
     """
-    (V5 - 无需修改此函数)
     调用 Qwen3_VL API。
-    encode_image_to_base64(V5) 会确保 image_path_or_url
-    在传入 client.chat.completions.create 之前 *总是* 一个 Base64 Data URI。
+    V5 的 encode_image_to_base64 会确保传入 Qwen 的是 Base64 Data URI。
     """
     if not QWEN_API_KEY or QWEN_API_KEY == "sk-YOUR-ACTUAL-API-KEY-HERE":
-        raise ValueError("QWEN_API_KEY 未设置。")
+        raise ValueError("QWEN_API_KEY 未设置。请在脚本顶部或环境变量中设置 DASHSCOPE_API_KEY。")
 
     if "compatible-mode" not in QWEN_BASE_URL:
-        raise ValueError(f"QWEN_BASE_URL 看上去不正确。")
+        raise ValueError(
+            f"QWEN_BASE_URL 看上去不正确。OpenAI 库需要兼容模式的 URL (应包含 'compatible-mode/v1')。当前: {QWEN_BASE_URL}")
 
-    sys.stderr.write(f"[INFO] 正在处理图片: {image_path_or_url[:70]}...\n")
+    sys.stderr.write(f"[INFO] 正在处理图片 (V5 模式): {image_path_or_url[:70]}...\n")
     sys.stderr.flush()
 
     # 1. (关键) 调用 V5 的编码函数
@@ -122,7 +192,7 @@ def call_qwen_vl_api(prompt, image_path_or_url):
     except Exception as e:
         raise Exception(f"初始化 OpenAI 客户端失败: {e}")
 
-    # 3. (不变) 构建消息, 但现在 image_url.url 始终是 Base64
+    # 3. (不变) 构建消息, 现在 image_url.url 始终是 Base64
     messages = [
         {
             "role": "user",
@@ -149,22 +219,22 @@ def call_qwen_vl_api(prompt, image_path_or_url):
                 messages=messages
             )
 
+            # 5. 成功则解析并返回
             if completion.choices and completion.choices[0].message:
                 text_response = completion.choices[0].message.content
                 sys.stderr.write(f"[INFO] Qwen API 在第 {attempts} 次尝试中调用成功。\n")
                 sys.stderr.flush()
-                return text_response
+                return text_response  # 成功，跳出循环并返回值
             else:
                 raise Exception("API 响应中未找到 'choices' 或 'message'")
 
         except Exception as e:
+            # 6. 捕获异常
             last_exception = e
-            error_message = str(e)
+            error_message = str(e).lower()
 
-            # (V5 注意) 现在 Qwen 不会再报 "Download timed out" 了，
-            # 因为我们是直接发送的 Base64。
-            # 但我们保留重试逻辑，以防 Qwen API 本身超时或 5xx 错误。
-            if "timed out" in error_message.lower() or "timeout" in error_message.lower() or "500" in error_message or "503" in error_message:
+            # (V5) 检查 Qwen API 本身的超时或服务器错误 (现在不会有 "Download timed out" 了)
+            if "timed out" in error_message or "timeout" in error_message or "500" in error_message or "503" in error_message or "service temporarily unavailable" in error_message:
                 sys.stderr.write(f"[WARNING] 尝试 {attempts}/{MAX_RETRIES} 失败: Qwen API 报告超时或服务器错误。\n")
                 sys.stderr.flush()
                 if attempts < MAX_RETRIES:
@@ -173,14 +243,15 @@ def call_qwen_vl_api(prompt, image_path_or_url):
                     time.sleep(RETRY_DELAY_SECONDS)
                 # (继续下一次循环)
             else:
-                # 不可重试的错误 (例如 "image format illegal" -- 如果发生说明 Base64 编码出错了)
+                # 不可重试的错误 (例如 API Key 错, "image format illegal" 等)
                 sys.stderr.write(f"[ERROR] 发生不可重试的错误: {e}\n")
                 sys.stderr.flush()
-                raise e
+                raise e  # 抛出非超时错误，终止循环
 
+    # 7. (新) 如果循环结束仍未成功
     sys.stderr.write(f"[ERROR] 所有 {MAX_RETRIES} 次尝试均失败。\n")
     sys.stderr.flush()
-    raise last_exception
+    raise last_exception  # 抛出最后一次捕获的异常
 
 
 # ==============================================================================
@@ -196,12 +267,19 @@ def main():
         for line in sys.stdin:
             if not line:
                 break
-            # ... (main 函数的其余所有代码保持不变) ...
-            # ... (main 函数的其余所有代码保持不变) ...
+
+            try:
+                request = json.loads(line)
+            except json.JSONDecodeError:
+                send_jsonrpc_error(-1, -32700, "Parse error: Invalid JSON received")
+                continue
+
             request_id = request.get("id")
             method = request.get("method")
 
             if request_id is not None:
+                # --- 是“请求”(Request)，必须回复 ---
+
                 if method == "initialize":
                     client_protocol_version = request.get("params", {}).get("protocolVersion", "2025-03-26")
                     compliant_result = {
@@ -212,9 +290,11 @@ def main():
                     send_jsonrpc_response(request_id, compliant_result)
 
                 elif method == "tools/list":
+                    # OpenHands 正在请求工具列表 (包含新的说明)
                     send_jsonrpc_response(request_id, {"tools": QWEN_TOOL_LIST})
 
                 elif method == "tools/call":
+                    # OpenHands 正在调用工具
                     try:
                         tool_name = request["params"].get("name")
                         tool_input = request["params"].get("input") or request["params"].get("arguments") or {}
@@ -235,10 +315,12 @@ def main():
                         # (不变) 调用 V5 函数
                         result_content = call_qwen_vl_api(prompt, image_url)
 
+                        # 成功，返回结果
                         send_jsonrpc_response(request_id, {"content": result_content})
 
                     except Exception as e:
-                        sys.stderr.write(f"[ERROR] Tool execution error after retries: {e}\n")
+                        # (不变) 只有当 call_qwen_vl_api *最终* 失败后，才会到这里
+                        sys.stderr.write(f"[ERROR] Tool execution error after processing/retries: {e}\n")
                         sys.stderr.flush()
                         send_jsonrpc_error(request_id, -32000, f"Tool execution error: {e}")
 
@@ -246,6 +328,7 @@ def main():
                     send_jsonrpc_error(request_id, -32601, f"Method not found: {method}")
 
             else:
+                # --- 是“通知”(Notification)，绝不能回复 ---
                 if method == "notifications/initialized":
                     sys.stderr.write("[INFO] OpenHands 客户端已初始化。\n")
                     sys.stderr.flush()
@@ -262,4 +345,13 @@ def main():
 
 
 if __name__ == "__main__":
+    # 确保 API Key 已设置
+    if not QWEN_API_KEY or QWEN_API_KEY == "sk-YOUR-ACTUAL-API-KEY-HERE":
+        sys.stderr.write("=" * 50 + "\n")
+        sys.stderr.write("[FATAL ERROR] DASHSCOPE_API_KEY 未设置。\n")
+        sys.stderr.write("请在环境变量中设置 DASHSCOPE_API_KEY，或在脚本顶部修改 QWEN_API_KEY。\n")
+        sys.stderr.write("=" * 50 + "\n")
+        sys.stderr.flush()
+        sys.exit(1)
+
     main()
