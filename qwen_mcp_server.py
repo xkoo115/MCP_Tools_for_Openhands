@@ -86,38 +86,66 @@ def encode_image_to_base64(image_path_or_url):
         raise Exception(f"处理图片路径失败: {image_path_or_url}. 错误: {e}")
 
 
-# (关键修改 6) 更改参数名，使其与新定义一致
 def call_qwen_vl_api(prompt, image_data_uri):
     """
-    调用 Qwen3_VL API。
+    调用 Qwen3_VL API (***已更新为 OpenAI 兼容格式***)。
     """
     if not QWEN_API_KEY or not QWEN_API_URL:
         raise ValueError("QWEN_API_KEY 或 QWEN_API_URL 未在脚本中设置")
 
-    # (关键修改 7)
-    # 我们的 encode_image_to_base64 函数已经可以处理 'data:image/...' 字符串了
-    # 它会直接返回 image_data_uri，这正是我们想要的！
+    # encode_image_to_base64 函数保持不变，它能正确处理 data URIs
     encoded_image_url = encode_image_to_base64(image_data_uri)
 
+    # (*** 关键修复 1: 构建 OpenAI 兼容的 Payload ***)
+    # 结构从 {"model": ..., "input": {"messages": [...]}}
+    # 变为     {"model": ..., "messages": [...]}
     payload = {
-        "model": "qwen-vl-plus",
-        "input": {"messages": [{"role": "user", "content": [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": encoded_image_url}}]}]},
-        "parameters": {"result_format": "message"}
+        "model": "qwen-vl-plus",  # 确保模型名称正确
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    # 遵循你提供的官方示例的顺序
+                    {"type": "image_url", "image_url": {"url": encoded_image_url}},
+                    {"type": "text", "text": prompt}
+                ]
+            }
+        ]
+        # 注意: 原生的 "parameters" 字段在这里不再需要
     }
-    # ... 后续不变 ...
-    headers = {"Authorization": f"Bearer {QWEN_API_KEY}", "Content-Type": "application/json"}
+
+    headers = {
+        "Authorization": f"Bearer {QWEN_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    # API 调用不变
     response = requests.post(QWEN_API_URL, json=payload, headers=headers)
-    response.raise_for_status()
+    response.raise_for_status()  # 检查 HTTP 错误
     result = response.json()
-    if result.get("output", {}).get("choices"):
-        text_response = result["output"]["choices"][0]["message"]["content"]
+
+    # (*** 关键修复 2: 解析 OpenAI 兼容的 Response ***)
+    # 结构从 result["output"]["choices"][0]["message"]["content"]
+    # 变为     result["choices"][0]["message"]["content"]
+    try:
+        # 遵循 OpenAI 格式: result.choices[0].message.content
+        text_response = result["choices"][0]["message"]["content"]
+
+        # Qwen 的 OpenAI 兼容模式在返回纯文本时, content 就是一个字符串
+        if isinstance(text_response, str):
+            return text_response
+
+        # 如果它(在未来)返回一个列表 (例如，图文并茂的回答)，我们只提取文本部分
         if isinstance(text_response, list):
             for part in text_response:
                 if part.get("type") == "text":
                     return part["text"]
-        elif isinstance(text_response, str):
-            return text_response
-    raise Exception(f"无法从 Qwen API 响应中解析出文本内容: {result}")
+
+        return str(text_response)
+
+    except (KeyError, IndexError) as e:
+        # 如果 'choices' 或 'message' 等键不存在
+        raise Exception(f"无法从 Qwen OpenAI 兼容 API 响应中解析出文本内容: {result}. 错误: {e}")
 
 # def call_qwen_vl_api(prompt, image_url):
 #     if not QWEN_API_KEY or not QWEN_API_URL:
