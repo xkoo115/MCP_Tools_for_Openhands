@@ -1,0 +1,11 @@
+sde-add-wiki-page
+sde-update-dev-document
+hr-create-career-ladder
+pm-monthly-attendance-slides
+pm-prepare-meeting-with-customers
+pm-update-project-milestones
+sde-pitch-idea-to-manager
+hr-make-slides-introduce-leadership
+pm-check-backlog-update-issues
+sde-change-branch-policy
+sde-sotopia-create-agent
