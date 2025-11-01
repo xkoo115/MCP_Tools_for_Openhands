@@ -1,0 +1,14 @@
+{
+    "GitLab": {
+        "Authentication": "Service URL: http://the-agent-company.com:8929\nRoot Email: root@local\nRoot Password: theagentcompany"
+    },
+    "ownCloud": {
+        "Authentication": "Service URL: http://the-agent-company.com:8092\nUsername: theagentcompany\nPassword: theagentcompany"
+    },
+    "Plane": {
+        "Authentication": "Service URL: http://the-agent-company.com:8091\nEmail: agent@company.com\nPassword: theagentcompany\nAPI_KEY: plane_api_83f868352c6f490aba59b869ffdae1cf"
+    },
+    "RocketChat": {
+        "Authentication": "Service URL: http://the-agent-company.com:3000\nEmail: theagentcompany\nPassword: theagentcompany"
+    }
+}
