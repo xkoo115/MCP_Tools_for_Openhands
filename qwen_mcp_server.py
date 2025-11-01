@@ -2,7 +2,7 @@
 import sys
 import json
 import os
-import requests  # (V5 needs this)
+import requests
 import base64
 import mimetypes
 import time
@@ -10,23 +10,19 @@ from urllib.parse import urlparse
 from openai import OpenAI
 
 # --- Qwen3_VL API Configuration ---
-# Prioritize reading from environment variables; fall back to the default Beijing region URL.
-# Ensure your API Key matches this region.
 QWEN_API_KEY = os.getenv("DASHSCOPE_API_KEY", "sk-YOUR-ACTUAL-API-KEY-HERE")
 QWEN_BASE_URL = os.getenv("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
 
 TOOL_NAME = "analyze_image_with_qwen"
 
 # --- Retry Constants ---
-MAX_RETRIES = 1  # Total 3 attempts
-RETRY_DELAY_SECONDS = 3  # Wait 3 seconds before each retry
+MAX_RETRIES = 1
+RETRY_DELAY_SECONDS = 3
 
-# --- Tool Definition ---
+# --- Tool Definition (Unchanged) ---
 QWEN_TOOL_LIST = [
     {
         "name": TOOL_NAME,
-
-        # Instructions for the OpenHands LLM
         "description": (
             "Analyzes and understands images using the Qwen-VL model. This tool only accepts **publicly accessible URLs**.\n"
             "**Important Instruction**: If the image is a local file path (e.g., /app/workspace/image.png),"
@@ -35,7 +31,6 @@ QWEN_TOOL_LIST = [
             "Upload command example: \n"
             "curl -s -F \"reqtype=fileupload\" -F \"fileToUpload=@/app/workspace/image.png\" https://catbox.moe/user/api.php"
         ),
-
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -85,12 +80,12 @@ def send_jsonrpc_error(request_id, code, message):
 
 
 # ==============================================================================
-# (*** Gemini V5 Upgrade: Key Modification ***)
+# V5 Core Logic: encode_image_to_base64 (Unchanged)
 # ==============================================================================
 
 def encode_image_to_base64(image_path_or_url):
     """
-    (V5 Upgrade)
+    (V5 Logic - Unchanged)
     Converts a path or URL into a Base64 Data URI.
     - If 'http/https' URL, this function will *download it* and convert to Base64.
     - If local path, it reads and encodes.
@@ -102,27 +97,22 @@ def encode_image_to_base64(image_path_or_url):
             sys.stderr.write(f"[INFO] Detected public URL, server is downloading it: {image_path_or_url[:70]}...\n")
             sys.stderr.flush()
 
-            # Act like a browser to prevent 403
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
 
             try:
-                # Download image content
                 response = requests.get(image_path_or_url, timeout=15, headers=headers)
-                response.raise_for_status()  # Check for 4xx/5xx errors
-
+                response.raise_for_status()
                 content = response.content
                 mime_type = response.headers.get('Content-Type', 'application/octet-stream')
 
-                # Validate if the download is an image (prevents HTML error pages)
                 if not mime_type.startswith('image/'):
                     sys.stderr.write(f"[ERROR] Downloaded file is not an image! Content-Type: {mime_type}\n")
                     sys.stderr.flush()
                     raise ValueError(
                         f"Downloaded file is not an image (might be an HTML error page). Content-Type: {mime_type}")
 
-                # Encode to Base64 Data URI
                 encoded_string = base64.b64encode(content).decode('utf-8')
                 data_uri = f"data:{mime_type};base64,{encoded_string}"
 
@@ -136,20 +126,19 @@ def encode_image_to_base64(image_path_or_url):
 
         # 2. Check if already Data URI
         elif image_path_or_url.startswith('data:image'):
-            return image_path_or_url  # Already Base64, return directly
+            return image_path_or_url
 
         # 3. Check for 'file://' URI
         elif urlparse(image_path_or_url).scheme == 'file':
             local_path = urlparse(image_path_or_url).path
-        # 4. Check for local path (must be accessible by the *server*)
+        # 4. Check for local path (accessible by the *server*)
         elif os.path.exists(image_path_or_url):
             local_path = image_path_or_url
         else:
-            # If Agent mistakenly passes /app/workspace/..., it will fail here
             raise ValueError(f"Path is neither a URL nor a valid local file: {image_path_or_url}."
                              "Please ensure the Agent provides a public URL.")
 
-        # 5. (Unchanged) Read and encode local file
+        # 5. Read and encode local file
         sys.stderr.write(f"[INFO] Encoding local file: {local_path}\n")
         sys.stderr.flush()
         with open(local_path, "rb") as image_file:
@@ -158,18 +147,17 @@ def encode_image_to_base64(image_path_or_url):
         return f"data:{mime_type};base64,{encoded_string}"
 
     except Exception as e:
-        # Raise exception, which will be returned to OpenHands via JSON-RPC
         raise Exception(f"Failed to process image path: {image_path_or_url}. Error: {e}")
 
 
 # ==============================================================================
-# API Call Function (with Retry Logic)
+# V5 Core Logic: call_qwen_vl_api (Unchanged)
 # ==============================================================================
 
 def call_qwen_vl_api(prompt, image_path_or_url):
     """
-    Calls the Qwen3_VL API.
-    V5's encode_image_to_base64 ensures a Base64 Data URI is passed to Qwen.
+    (V5 Logic - Unchanged)
+    Calls the Qwen3_VL API with retry logic.
     """
     if not QWEN_API_KEY or QWEN_API_KEY == "sk-YOUR-ACTUAL-API-KEY-HERE":
         raise ValueError("QWEN_API_KEY is not set. Please set DASHSCOPE_API_KEY in environment or script.")
@@ -181,11 +169,8 @@ def call_qwen_vl_api(prompt, image_path_or_url):
     sys.stderr.write(f"[INFO] Processing image (V5 Mode): {image_path_or_url[:70]}...\n")
     sys.stderr.flush()
 
-    # 1. (Key) Call V5 encoding function
-    # Input (URL or path) will be converted to Base64 Data URI
     encoded_data_uri = encode_image_to_base64(image_path_or_url)
 
-    # 2. (Unchanged) Instantiate OpenAI client
     try:
         client = OpenAI(
             api_key=QWEN_API_KEY,
@@ -194,7 +179,6 @@ def call_qwen_vl_api(prompt, image_path_or_url):
     except Exception as e:
         raise Exception(f"Failed to initialize OpenAI client: {e}")
 
-    # 3. (Unchanged) Build message, image_url.url is now always Base64
     messages = [
         {
             "role": "user",
@@ -205,7 +189,6 @@ def call_qwen_vl_api(prompt, image_path_or_url):
         }
     ]
 
-    # --- (Unchanged) V4 Retry Loop ---
     attempts = 0
     last_exception = None
 
@@ -221,22 +204,18 @@ def call_qwen_vl_api(prompt, image_path_or_url):
                 messages=messages
             )
 
-            # 5. Success: parse and return
             if completion.choices and completion.choices[0].message:
                 text_response = completion.choices[0].message.content
                 sys.stderr.write(f"[INFO] Qwen API call successful on attempt {attempts}.\n")
                 sys.stderr.flush()
-                return text_response  # Success, break loop and return value
+                return text_response
             else:
                 raise Exception("No 'choices' or 'message' found in API response")
 
         except Exception as e:
-            # 6. Catch exception
             last_exception = e
             error_message = str(e).lower()
 
-            # (V5) Check for Qwen API's own timeout or server errors (no more "Download timed out")
-            # But we keep retry logic for Qwen API timeouts or 5xx errors.
             if "timed out" in error_message or "timeout" in error_message or "500" in error_message or "503" in error_message or "service temporarily unavailable" in error_message:
                 sys.stderr.write(
                     f"[WARNING] Attempt {attempts}/{MAX_RETRIES} failed: Qwen API reported timeout or server error.\n")
@@ -245,26 +224,23 @@ def call_qwen_vl_api(prompt, image_path_or_url):
                     sys.stderr.write(f"[INFO] Retrying in {RETRY_DELAY_SECONDS} seconds...\n")
                     sys.stderr.flush()
                     time.sleep(RETRY_DELAY_SECONDS)
-                # (Continue to next loop)
             else:
-                # Non-retryable error (e.g., API Key, "image format illegal" etc.)
                 sys.stderr.write(f"[ERROR] Non-retryable error occurred: {e}\n")
                 sys.stderr.flush()
-                raise e  # Re-throw non-timeout error, terminating loop
+                raise e
 
-    # 7. (New) If loop finishes without success
     sys.stderr.write(f"[ERROR] All {MAX_RETRIES} attempts failed.\n")
     sys.stderr.flush()
-    raise last_exception  # Re-throw the last captured exception
+    raise last_exception
 
 
 # ==============================================================================
-# MCP Protocol Handling (main function unchanged)
+# MCP Protocol Handling (V6 FIX)
 # ==============================================================================
 
 def main():
     send_raw_message({"mcp": "0.1.0"})
-    sys.stderr.write("[INFO] Qwen-VL MCP Server (V5 - Server-Side Download) starting, waiting for connection...\n")
+    sys.stderr.write("[INFO] Qwen-VL MCP Server (V6 - List Fix) starting, waiting for connection...\n")
     sys.stderr.flush()
 
     try:
@@ -288,17 +264,15 @@ def main():
                     client_protocol_version = request.get("params", {}).get("protocolVersion", "2025-03-26")
                     compliant_result = {
                         "protocolVersion": client_protocol_version,
-                        "serverInfo": {"name": "Qwen-VL-MCP-Server", "version": "1.4.0-Server-Download-Proxy"},
+                        "serverInfo": {"name": "Qwen-VL-MCP-Server", "version": "1.5.0-List-Fix"},
                         "capabilities": {}
                     }
                     send_jsonrpc_response(request_id, compliant_result)
 
                 elif method == "tools/list":
-                    # OpenHands is requesting the tool list (with new instructions)
                     send_jsonrpc_response(request_id, {"tools": QWEN_TOOL_LIST})
 
                 elif method == "tools/call":
-                    # OpenHands is calling the tool
                     try:
                         tool_name = request["params"].get("name")
                         tool_input = request["params"].get("input") or request["params"].get("arguments") or {}
@@ -316,14 +290,23 @@ def main():
                             f"[INFO] Received tool call: {TOOL_NAME} (Prompt: '{prompt[:30]}...', URL/Path: '{image_url}')\n")
                         sys.stderr.flush()
 
-                        # (Unchanged) Call V5 function
-                        result_content = call_qwen_vl_api(prompt, image_url)
+                        # (Unchanged) Call V5 function to get the result string
+                        result_content_string = call_qwen_vl_api(prompt, image_url)
 
-                        # Success, return result
-                        send_jsonrpc_response(request_id, {"content": result_content})
+                        # (*** V6 FIX: Wrap the string result in a list ***)
+                        # OpenHands expects content to be a List[ContentBlock]
+                        structured_content_list = [
+                            {
+                                "type": "text",
+                                "text": result_content_string
+                            }
+                        ]
+
+                        # Send the correctly formatted list
+                        send_jsonrpc_response(request_id, {"content": structured_content_list})
+                        # (*** END OF V6 FIX ***)
 
                     except Exception as e:
-                        # (Unchanged) Only arrives here if call_qwen_vl_api *finally* fails
                         sys.stderr.write(f"[ERROR] Tool execution error after processing/retries: {e}\n")
                         sys.stderr.flush()
                         send_jsonrpc_error(request_id, -32000, f"Tool execution error: {e}")
@@ -349,7 +332,6 @@ def main():
 
 
 if __name__ == "__main__":
-    # Ensure API Key is set
     if not QWEN_API_KEY or QWEN_API_KEY == "sk-YOUR-ACTUAL-API-KEY-HERE":
         sys.stderr.write("=" * 50 + "\n")
         sys.stderr.write("[FATAL ERROR] DASHSCOPE_API_KEY is not set.\n")
