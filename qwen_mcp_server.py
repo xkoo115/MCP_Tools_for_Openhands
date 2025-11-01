@@ -19,18 +19,25 @@ TOOL_NAME = "analyze_image_with_qwen"
 MAX_RETRIES = 1
 RETRY_DELAY_SECONDS = 3
 
-# --- Tool Definition (Unchanged) ---
+# ==============================================================================
+# (*** Gemini V6.1 优化：强化工具描述 ***)
+# ==============================================================================
 QWEN_TOOL_LIST = [
     {
         "name": TOOL_NAME,
+
+        # (V6.1) 优化 description，明确区分图片和视频
         "description": (
-            "Analyzes and understands images using the Qwen-VL model. This tool only accepts **publicly accessible URLs**.\n"
-            "**Important Instruction**: If the image is a local file path (e.g., /app/workspace/image.png),"
-            "you **must** first upload it to a public image host using the 'shell' tool,"
-            "and then call this tool with the returned URL.\n"
-            "Upload command example: \n"
-            "curl -s -F \"reqtype=fileupload\" -F \"fileToUpload=@/app/workspace/image.png\" https://catbox.moe/user/api.php"
+            "Analyzes and understands **still images** using the Qwen-VL model. This tool **only accepts image URLs** (e.g., .png, .jpg, .jpeg) and **CANNOT** analyze video files (.mp4) directly.\n\n"
+            "**IF THE FILE IS AN IMAGE** (e.g., /app/workspace/image.png):\n"
+            "1. Use the 'shell' tool to upload it: `curl -s -F \"reqtype=fileupload\" -F \"fileToUpload=@/app/workspace/image.png\" https://catbox.moe/user/api.php`\n"
+            "2. Call this tool (`analyze_image_with_qwen`) with the returned image URL.\n\n"
+            "**IF THE FILE IS A VIDEO** (e.g., /app/workspace/video.mp4):\n"
+            "1. You **must** first extract a keyframe (a single image) from the video. Use the 'shell' tool with `ffmpeg` (e.g., `ffmpeg -i /app/workspace/video.mp4 -ss 00:00:01 -vframes 1 /app/workspace/keyframe.jpg`).\n"
+            "2. Upload the *new image* (`keyframe.jpg`) using `curl`: `curl -s -F \"reqtype=fileupload\" -F \"fileToUpload=@/app/workspace/keyframe.jpg\" https://catbox.moe/user/api.php`\n"
+            "3. Call this tool (`analyze_image_with_qwen`) with the **new image URL**."
         ),
+
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -38,12 +45,13 @@ QWEN_TOOL_LIST = [
                     "type": "string",
                     "description": "The question or prompt for Qwen-VL (e.g., 'What is in this image?')"
                 },
+
+                # (V6.1) 优化 image_url 描述
                 "image_url": {
                     "type": "string",
                     "description": (
-                        "The **public URL** of the image. Must be in http://, https://, or data:image//... format."
-                        "**Do not** pass a local file path (e.g., /app/workspace/...).."
-                        "Please follow the upload instructions in the main tool description."
+                        "The **public URL of the image** to be analyzed. This MUST be a URL for a **still image** (e.g., .png, .jpg, .jpeg)."
+                        "**Do not** pass a URL to a video file (.mp4). Follow the instructions in the main tool description if you have a video file."
                     )
                 }
             },
@@ -87,9 +95,6 @@ def encode_image_to_base64(image_path_or_url):
     """
     (V5 Logic - Unchanged)
     Converts a path or URL into a Base64 Data URI.
-    - If 'http/https' URL, this function will *download it* and convert to Base64.
-    - If local path, it reads and encodes.
-    - If Data URI, it returns directly.
     """
     try:
         # 1. Check for HTTP/HTTPS URL (server downloads itself)
@@ -235,12 +240,12 @@ def call_qwen_vl_api(prompt, image_path_or_url):
 
 
 # ==============================================================================
-# MCP Protocol Handling (V6 FIX)
+# MCP Protocol Handling (V6 FIX - Unchanged)
 # ==============================================================================
 
 def main():
     send_raw_message({"mcp": "0.1.0"})
-    sys.stderr.write("[INFO] Qwen-VL MCP Server (V6 - List Fix) starting, waiting for connection...\n")
+    sys.stderr.write("[INFO] Qwen-VL MCP Server (V6.1 - Video/Image Fix) starting, waiting for connection...\n")
     sys.stderr.flush()
 
     try:
@@ -264,12 +269,13 @@ def main():
                     client_protocol_version = request.get("params", {}).get("protocolVersion", "2025-03-26")
                     compliant_result = {
                         "protocolVersion": client_protocol_version,
-                        "serverInfo": {"name": "Qwen-VL-MCP-Server", "version": "1.5.0-List-Fix"},
+                        "serverInfo": {"name": "Qwen-VL-MCP-Server", "version": "1.6.0-Video-Check"},
                         "capabilities": {}
                     }
                     send_jsonrpc_response(request_id, compliant_result)
 
                 elif method == "tools/list":
+                    # (V6.1) 发送优化后的工具列表
                     send_jsonrpc_response(request_id, {"tools": QWEN_TOOL_LIST})
 
                 elif method == "tools/call":
@@ -290,11 +296,10 @@ def main():
                             f"[INFO] Received tool call: {TOOL_NAME} (Prompt: '{prompt[:30]}...', URL/Path: '{image_url}')\n")
                         sys.stderr.flush()
 
-                        # (Unchanged) Call V5 function to get the result string
+                        # (V6) Call V5 function to get the result string
                         result_content_string = call_qwen_vl_api(prompt, image_url)
 
-                        # (*** V6 FIX: Wrap the string result in a list ***)
-                        # OpenHands expects content to be a List[ContentBlock]
+                        # (V6) Wrap the string result in a list
                         structured_content_list = [
                             {
                                 "type": "text",
@@ -304,7 +309,6 @@ def main():
 
                         # Send the correctly formatted list
                         send_jsonrpc_response(request_id, {"content": structured_content_list})
-                        # (*** END OF V6 FIX ***)
 
                     except Exception as e:
                         sys.stderr.write(f"[ERROR] Tool execution error after processing/retries: {e}\n")
