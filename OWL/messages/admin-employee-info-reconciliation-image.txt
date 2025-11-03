@@ -1,0 +1,78 @@
+--- Task Information From: task.md ---
+As a small startup, we don't really have an HR system that records every employee's information. Instead,
+we store employee information in a spreadsheet and manually update it whenever there's a change.
+
+In your /workspace folder you can find a CSV file called `employees.csv` that contains the basic information
+for all of our employees. Unfortunately, this file hasn't been updated in a while, so it might be missing
+some employees, have outdated or even wrong information.
+
+You could find all current employees on RocketChat (http://the-agent-company.com:3000/). If you need any
+information from them, just DM them on RocketChat!
+
+Your task is to update the `employees.csv` file with the most up-to-date information, and make sure that
+every employee is included. Correct any errors you find in the spreadsheet.
+
+
+--- Checkpoints Information From: checkpoints.md ---
+# Checkpoints
+
+This task has 7 points in total.
+
+## Checkpoint 1 (3pt)
+
+Spoke to Priya Sharma, Sophia Rodriguez, and Zhang Wei on RocketChat.
+
+## Checkpoint 2 (1pt)
+
+"Chan Xinyi" is corrected to "Chen Xinyi".
+
+## Checkpoint 3 (1pt)
+
+Missing entry "Priya Sharma" is added to the spreadsheet, with the correct email and phone number.
+
+## Checkpoint 4 (1pt)
+
+Realize that Sophia Rodriguez's phone number is incorrect, and correct it.
+
+## Checkpoint 5 (1pt)
+
+Add missing entry, Zhang Wei's phone number.
+
+--- Score Status From: eval_admin-employee-info-reconciliation-image.json (分数结果) ---
+{
+    "checkpoints": [
+        {
+            "total": 3,
+            "result": 0
+        },
+        {
+            "total": 1,
+            "result": 0
+        },
+        {
+            "total": 1,
+            "result": 0
+        },
+        {
+            "total": 1,
+            "result": 0
+        },
+        {
+            "total": 1,
+            "result": 0
+        }
+    ],
+    "final_score": {
+        "total": 7,
+        "result": 0
+    }
+}
+
+ID: 5
+Message: Running command: pwd && ls -la
+Content: Let me first check the current directory and read the task description.
+------------------------------
+ID: 6
+Message: Command `pwd && ls -la` executed with exit code 0.
+Content: Let me first check the current directory and read the task description.
+------------------------------
