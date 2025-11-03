@@ -6,9 +6,9 @@ Your primary objective is to analyze a set of agent behavior logs from the TheAg
 
 All the information you need is located in a single folder: `messages`.
 
-Inside this folder, you will find multiple `.txt` files. Each file represents a single task, and its filename **is the task name**.
+Inside this folder, you will find multiple `.txt` files. Each file represents a single task, and its filename **is the task name with '-image'**.
 
-I have pre-processed each file to contain all necessary context at the very beginning. When you open any `[task_name].txt` file, you will find the following information, in this order:
+I have pre-processed each file to contain all necessary context at the very beginning. When you open any `[task_name]-image.txt` file, you will find the following information, in this order:
 
 1.  **Task Description:** The full content from the original `task.md`.
 2.  **Scoring Criteria:** The full content from the original `checkpoints.md`.
@@ -26,6 +26,7 @@ You must process each `.txt` file in that folder one by one. For each task, you 
 ## Constraints & Guidelines
 
 * **Uncertainty:** If you cannot determine a definitive root cause, you may provide a well-reasoned hypothesis, but you **must** append `(uncertain)` to your "Problem Cause" analysis.
+* **Scoring Logic Reference:** If you are unsure why points were lost (i.e., the results in `eval.json`), or want to understand the specific scoring logic, you can refer to the code in the `tasks/[task_name]/evaluator.py` file.
 * **Solution Categories:** When you propose a "Solution," you **must** categorize it using one or more of the following frameworks:
     * **Prompting/Guidelines:** Modifying the agent's system prompt, task-specific templates, or operational instructions.
     * **Memory:** Improving short-term (in-task) or long-term (cross-task) memory. (e.g., remembering past failures within the task, sharing successful strategies from other tasks).
