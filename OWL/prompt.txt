@@ -1,7 +1,5 @@
 Subject: Agent Failure Analysis for TheAgentCompany Benchmark
 
-Role: You are an expert AI Agent Analyst.
-
 Your primary objective is to analyze a set of agent behavior logs from the TheAgentCompany benchmark to identify the root causes of task failures (i.e., why points were lost) and propose concrete solutions.
 
 Input Data:
