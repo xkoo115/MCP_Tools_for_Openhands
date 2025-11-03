@@ -1,0 +1,489 @@
+--- Task Information From: task.md ---
+Navigate to http://the-agent-company.com:8929/root/bustub/-/issues/759. There is instruction about a project called HyperLogLog algorithm. 
+
+You need to copy the project instruction from gitlab to your company wiki page at http://the-agent-company.com:8929/root/doc/-/wikis, create a new wiki page with title HyperLogLog_project and let Gitlab auto-generate the wiki URL, and return the url of that wiki page. Write that as a .txt file called wiki_url.txt under the /workspace directory.
+
+
+--- Checkpoints Information From: checkpoints.md ---
+# Checkpoints
+
+This task has 4 points in total. 
+
+## Checkpoint 1 (1pt)
+
+Confirm that the bustub issue page has been accessed
+
+## Checkpoint 2 (1pt)
+
+Confirm that a new wiki page has been created and exists
+
+## Checkpoint 3 (1pt)
+
+Check the wiki page to make sure that key information is not lost
+
+## Checkpoint 4 (1pt)
+
+Make sure that a wiki_url.txt file exists under workspace directory that contains a valid wiki page URL to the 
+newly created wiki page.
+
+--- Score Status From: eval_sde-move-bustub-wiki-image.json (分数结果) ---
+{
+    "checkpoints": [
+        {
+            "total": 1,
+            "result": 1
+        },
+        {
+            "total": 1,
+            "result": 1
+        },
+        {
+            "total": 1,
+            "result": 0
+        },
+        {
+            "total": 1,
+            "result": 1
+        }
+    ],
+    "final_score": {
+        "total": 4,
+        "result": 3
+    }
+}
+
+ID: 5
+Message: Reading file: /instruction
+Content: Let me first check the task description to understand what needs to be done.
+------------------------------
+ID: 6
+Message: I read the file /instruction.
+Content: Let me first check the task description to understand what needs to be done.
+------------------------------
+ID: 9
+Message: I am interacting with the browser:
+```
+
+goto('http://the-agent-company.com:8929/root/bustub/-/issues/759')
+noop(2000)  # Wait for page to load
+
+```
+Content: Now I understand the task. I need to:
+1. Navigate to the GitLab issue at http://the-agent-company.com:8929/root/bustub/-/issues/759
+2. Copy the project instruction about HyperLogLog algorithm
+3. Create a new wiki page at http://the-agent-company.com:8929/root/doc/-/wikis with title "HyperLogLog_project"
+4. Return the URL of that wiki page and save it as wiki_url.txt
+
+Let me start by navigating to the issue page to get the instructions.
+------------------------------
+ID: 10
+Message: Visited http://the-agent-company.com:8929/root/bustub/-/issues/759
+Content: Now I understand the task. I need to:
+1. Navigate to the GitLab issue at http://the-agent-company.com:8929/root/bustub/-/issues/759
+2. Copy the project instruction about HyperLogLog algorithm
+3. Create a new wiki page at http://the-agent-company.com:8929/root/doc/-/wikis with title "HyperLogLog_project"
+4. Return the URL of that wiki page and save it as wiki_url.txt
+
+Let me start by navigating to the issue page to get the instructions.
+------------------------------
+ID: 11
+Message: I am interacting with the browser:
+```
+
+goto('http://the-agent-company.com:8929/root/doc/-/wikis')
+noop(2000)  # Wait for page to load
+
+```
+Content: Great! I can see the issue page with the HyperLogLog project instructions. Now I need to copy this content and create a wiki page. Let me navigate to the wiki section to create the new page.
+------------------------------
+ID: 12
+Message: Visited http://the-agent-company.com:8929/root/doc/-/wikis/home
+Content: Great! I can see the issue page with the HyperLogLog project instructions. Now I need to copy this content and create a wiki page. Let me navigate to the wiki section to create the new page.
+------------------------------
+ID: 13
+Message: I am interacting with the browser:
+```
+
+
+# Look for a button to create a new page
+click('927')  # The Edit button might have options for creating new pages
+noop(1000)
+
+
+```
+Content: Now I need to create a new wiki page. Let me look for the "New page" button or similar option.
+------------------------------
+ID: 14
+Message: Visited http://the-agent-company.com:8929/root/doc/-/wikis/home?edit=true
+Content: Now I need to create a new wiki page. Let me look for the "New page" button or similar option.
+------------------------------
+ID: 15
+Message: I am interacting with the browser:
+```
+
+
+# Cancel the current edit
+click('1210')  # Cancel button
+noop(1000)
+
+
+```
+Content: I see I'm in edit mode for the existing Home page. I need to create a new page instead. Let me cancel this and look for a "New page" option.
+------------------------------
+ID: 16
+Message: Visited http://the-agent-company.com:8929/root/doc/-/wikis/home
+Content: I see I'm in edit mode for the existing Home page. I need to create a new page instead. Let me cancel this and look for a "New page" option.
+------------------------------
+ID: 17
+Message: I am interacting with the browser:
+```
+
+
+
+# Look for a "New page" button or similar in the main area
+# Let me check the "Create new..." button in the top navigation
+click('102')  # Create new... button
+noop(1000)
+
+
+
+```
+Content: Now I need to find the "New page" button. Let me check if there's a button in the sidebar or main area to create a new page.
+------------------------------
+ID: 18
+Message: Visited http://the-agent-company.com:8929/root/doc/-/wikis/home
+Content: Now I need to find the "New page" button. Let me check if there's a button in the sidebar or main area to create a new page.
+------------------------------
+ID: 19
+Message: I am interacting with the browser:
+```
+
+
+
+
+# Close the dropdown first
+click('102')  # Click the Create new... button again to close it
+noop(500)
+
+# Let me check if there's a "New page" button in the wiki sidebar or main area
+# Look for any button that might create a new page
+# Let me try clicking on the "View all pages" link to see if there's a create option there
+click('1049')  # View all pages link
+noop(1000)
+
+
+
+
+```
+Content: I can see the "Create new..." dropdown is open, but it doesn't show an option for creating a new wiki page. Let me check if there's a "New page" option in the wiki sidebar or if I need to navigate to a different URL to create a wiki page.
+------------------------------
+ID: 20
+Message: Visited http://the-agent-company.com:8929/root/doc/-/wikis/pages
+Content: I can see the "Create new..." dropdown is open, but it doesn't show an option for creating a new wiki page. Let me check if there's a "New page" option in the wiki sidebar or if I need to navigate to a different URL to create a wiki page.
+------------------------------
+ID: 21
+Message: I am interacting with the browser:
+```
+
+
+
+
+# Click the "New page" button
+click('929')  # New page button
+noop(2000)  # Wait for page to load
+
+
+
+
+```
+Content: Perfect! I can see the "New page" button on the wiki pages list. Let me click it to create a new wiki page.
+------------------------------
+ID: 22
+Message: Visited http://the-agent-company.com:8929/root/doc/-/wikis/9f570128-f805-4b1a-b21a-bea67d4a49bc?random_title=true
+Content: Perfect! I can see the "New page" button on the wiki pages list. Let me click it to create a new wiki page.
+------------------------------
+ID: 23
+Message: I am interacting with the browser:
+```
+
+
+
+
+
+# Enter the title "HyperLogLog_project"
+fill('934', 'HyperLogLog_project')
+noop(500)
+
+# Now I need to copy the content from the issue page. Let me navigate back to the issue page first
+goto('http://the-agent-company.com:8929/root/bustub/-/issues/759')
+noop(2000)
+
+
+
+
+
+```
+Content: Great! I'm now on the new wiki page creation form. I can see the Title field is focused. Let me enter "HyperLogLog_project" as the title and then copy the content from the issue page.
+------------------------------
+ID: 24
+Message: Visited http://the-agent-company.com:8929/root/bustub/-/issues/759
+Content: Great! I'm now on the new wiki page creation form. I can see the Title field is focused. Let me enter "HyperLogLog_project" as the title and then copy the content from the issue page.
+------------------------------
+ID: 25
+Message: I am thinking...: Now I need to copy the content from this issue page. Let me go back to the wiki page creation form and paste the content. First, let me extract the text content from this issue page.
+
+I need to copy the content from the issue page and paste it into the wiki page. The issue page contains a lot of detailed information about the HyperLogLog algorithm project including:
+
+1. Project Specification
+2. Resources
+3. Instructions for Task #1 and Task #2
+4. Important Information
+5. Setting Up Your Development Environment
+6. Testing
+
+I should copy all this content and format it properly in Markdown for the wiki page. Let me navigate back to the wiki creation page and paste this content.
+
+Content: Now I need to copy the content from this issue page. Let me go back to the wiki page creation form and paste the content. First, let me extract the text content from this issue page.
+------------------------------
+ID: 26
+Message: Your thought has been logged.
+Content: Now I need to copy the content from this issue page. Let me go back to the wiki page creation form and paste the content. First, let me extract the text content from this issue page.
+------------------------------
+ID: 29
+Message: I am interacting with the browser:
+```
+
+
+
+
+
+
+# Click on the Content textarea to focus it
+click('1029')
+noop(500)
+
+# Now I'll enter the content from the HyperLogLog project issue
+# I'll create a comprehensive markdown document based on what I saw in the issue
+fill('1029', '''# HyperLogLog Project
+
+## Project Specification
+
+Consider the problem of keeping track of the number of unique users accessing a website in a single day. Although this is straightforward with a small site only visited by a few people, it is much more difficult when dealing with a large site with billions of users. In such cases, storing each user in a list and checking for duplicates is impractical. The sheer volume of data leads to significant challenges, including running out of memory, slow processing times, and other inefficiencies.
+
+The [HyperLogLog](https://en.wikipedia.org/wiki/HyperLogLog) (HLL) is a [probabilistic](https://en.wikipedia.org/wiki/Randomized_algorithm) data structure that tracks the cardinality of large data sets. HyperLogLog is suited for scenarios like the above, where the goal is to count the number of unique items in a massive data stream without explicitly storing every item. HLL relies on a clever hashing mechanism and a compact data structure to provide accurate estimates of unique users while using only a fraction of the memory required by traditional methods. This makes HLL an essential tool in modern database analytics.
+
+HLL provides probabilistic counting mechanism based on the following parameters:
+
+- `b` - Number of initial bits in a binary representation of a hash value
+- `m` - number of registers (or also called buckets) - can be considered as a memory block. They are equal to 2^b. (The terms "buckets" and "registers" can be used interchangeably when discussing HyperLogLog and tasks).
+- `p` - leftmost position of 1 (MSBs position of `1`)
+
+Consider a simple example of how this algorithm works using the string `"A great database is a great life"`. First, the string is hashed to produce a hash value, which is then converted into its binary representation. From the hash value (binary form), `b` bits are extracted, starting from the most significant bit(MSB). The register value is calculated from the extracted bits. (by default each register has a value of `0`).
+
+From the remaining set of bits, the position of the leftmost 1 is obtained (MSB), i.e the number of leading zeros from left plus 1 (as given in the picture given below).
+
+After this, using the `b` bits, the register value is calculated (which in the above case it's 6). Hence, in register 6, `max(register[6], p)` will be stored.
+
+Another value in a set may have p = 2 in register 3, hence 2 will be stored in register 3.
+
+Now, another element in a set has p = 2 in register 6. Hence, `max(register[6], p) –> max(5, 2)` will be stored in register 6.
+
+Similarly, another element having p = 4 in register 3, `max(register[3], p) –> max (2, 4)` will be stored in register 3.
+
+After all the elements in the set have been added, cardinality is calculated in the following manner.
+
+If there are total of `m` registers, then:
+
+![Cardinality Formula](https://15445.courses.cs.cmu.edu/fall2024/project0/img/cardinality.png)
+
+where `constant = 0.79402` and `R[j]` is the value in register `j` and `N = m`.
+
+## Resources
+
+To understand more about HLL and why they work:
+
+- [Short paper](https://algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf) on the HyperLogLog. It contains the description of HyperLogLog.
+- If you want a gentler intro on how it's probabilistic, check out this [video](https://www.youtube.com/watch?v=lJYufx0bfpw) and [video](https://www.youtube.com/watch?v=2PlrMCiUN_s) for a simpler explanation.
+- A blog on Meta's implementation of HLL - [Presto](https://engineering.fb.com/2018/12/13/data-infrastructure/hyperloglog/)
+
+**Note:**
+- In real-world implementations, some systems store the position of the leftmost 1 bit in a register (MSB), while others store the count of the rightmost contiguous zeros(LSB). In this project
+  - **Task 1** will use the **former** approach, storing the position of the leftmost 1 bit in a register.
+  - **Task 2** will use the **latter** approach, storing the count of the rightmost contiguous zeros in a register.
+
+## Instructions
+
+You will have to complete the two functions part of this project:
+
+### Task #1
+
+The first step is to implement a basic HyperLogLog data structure.
+
+In `hyperloglog.h`, following functions have to be implemented:
+
+- `HyperLogLog(inital_bits)`: a constructor where a number of leading bits (b) is provided.
+- `GetCardinality()`: returns the cardinality value of a given set
+- `AddElem(val)`: computes and places the value in the register.
+- `ComputeCardinality()`: computes the cardinality based on the above formula.
+
+Along with it, you can implement helper functions to implement the above (can add more as per requirement):
+
+- `ComputeBinary(hash_t hash)`: It computes a binary of a given hash value. The hash value should be converted to a 64 bit binary stream (otherwise tests may fail).
+- `PositionOfLeftmostOne(....)`: it computes the position of the leftmost 1.
+
+For calculating hash, you can use the given function:
+
+- `CalculateHash(...)` - to calculate hash
+
+Please refer to the `std::bitset` library for storing in binary representation. When a value is obtained in decimal, convert into a greatest integer **less than or equal to** the decimal. Refer `std::floor` for more details.
+
+### Task #2
+
+In the second step, you will implement [Presto's](https://engineering.fb.com/2018/12/13/data-infrastructure/hyperloglog/) dense layout implementation of HLL (Refer to the dense layout section).
+
+**Note:** In Presto's implementation, the binary rightmost contiguous set of zeros are counted (instead of the left zero count). In this task, similar approach should be used.
+
+The HLL stores overflow Buckets in the following manner: if the number of rightmost contiguous zeros are 33, its binary form will be `0100001`. In this scenario, it will be split into two pars, first 3 MSBs `010` and the last 4 LSBs `0001`. `0001` will be stored in the dense bucket, and the MSB `010` (which are overflowing bits) are stored in overflowing bucket.
+
+In `hyperloglog_presto.h` following functions will be used for grading:
+
+- `GetDenseBucket()` - Returns the dense bucket array
+- `GetOverflowBucketOfIdx(..)` - Returns the overflow set of bits for the given index (if it exists).
+- `GetCardinality()` - Returns the cardinality value
+
+Do not delete the above functions.
+
+Implement the following functions:
+
+- `HyperLogLogPresto(initial_bits)` - a constructor for HyperLogLogPresto
+- `AddElem()` - computes and places the value in the register.
+- `ComputeCardinality()` - computes the cardinality based on the above formula.
+
+For calculating hash, you can use the given function:
+
+- `CalculateHash(...)` - to calculate hash
+
+When a value is obtained in decimal, convert into a greatest integer **less than or equal to** the decimal.
+
+## Important Information
+
+- In **Task 2**, convert the hash value into 64-bit binary and then count the contiguous zeros (LSB).
+- For calculating cardinality in both **Task 1** & **Task 2**, following steps should be followed.
+  - Calculate the sum of the exponents and store it in memory using a `double` variable with default precision (no need for custom precision). The part of the formula to be stored in memory is shown below. Use `std::pow` for calculating the exponents.
+  - Using the sum calculated above, determine the cardinality as shown below.
+  - After obtaining the result above, convert it to the **greatest integer less than or equal to** the value. (as mentioned above).
+
+Failing to follow the steps above may result in inaccurate outcomes that do not align with the test cases.
+
+## Setting Up Your Development Environment
+
+First install the packages that BusTub requires:
+
+```
+# Linux
+$ sudo build_support/packages.sh
+# macOS
+$ build_support/packages.sh
+```
+
+See the README for additional information on how to setup different OS environments.
+
+To build the system from the commandline, execute the following commands:
+
+```
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_BUILD_TYPE=Debug ..
+$ make -j`nproc`
+```
+
+We recommend always configuring CMake in debug mode. This will enable you to output debug messages and check for memory leaks (more on this in below sections).
+
+## Testing
+
+You can test the individual components of this assignment using our testing framework. We use [GTest](https://github.com/google/googletest) for unit test cases. You can disable tests in GTest by adding a `DISABLED_` prefix to the test name. To run the tests from the command-line:
+
+```
+$ cd build
+$ make -j$(nproc) hyperloglog_test
+$ ./test/hyperloglog_test
+'''
+)
+noop(1000)
+
+
+
+
+
+
+```
+Content: Good! I can see the title is already set to "HyperLogLog_project" and the commit message is "Create HyperLogLog_project". Now I need to add the content from the issue page. Let me create the content in Markdown format based on what I saw in the issue.
+------------------------------
+ID: 30
+Message: Visited http://the-agent-company.com:8929/root/doc/-/wikis/9f570128-f805-4b1a-b21a-bea67d4a49bc?random_title=true
+Content: Good! I can see the title is already set to "HyperLogLog_project" and the commit message is "Create HyperLogLog_project". Now I need to add the content from the issue page. Let me create the content in Markdown format based on what I saw in the issue.
+------------------------------
+ID: 31
+Message: I am interacting with the browser:
+```
+
+
+
+
+
+# Click on the title field to make sure it's properly focused
+click('934')
+noop(500)
+
+# Now click the Create page button
+click('1078')
+noop(2000)
+
+
+
+
+
+```
+Content: Great! I can see the content has been successfully entered. The "Create page" button is still disabled, which might be because the title field lost focus. Let me click on the title field to make sure it's properly filled and then create the page.
+------------------------------
+ID: 32
+Message: Visited http://the-agent-company.com:8929/root/doc/-/wikis/9f570128-f805-4b1a-b21a-bea67d4a49bc?random_title=true
+Content: Great! I can see the content has been successfully entered. The "Create page" button is still disabled, which might be because the title field lost focus. Let me click on the title field to make sure it's properly filled and then create the page.
+------------------------------
+ID: 33
+Message: I am interacting with the browser:
+```
+
+
+
+
+
+
+# Clear the title field and re-enter it to ensure it's properly set
+fill('934', 'HyperLogLog_project')
+noop(500)
+
+# Now try clicking the Create page button again
+click('1078')
+noop(2000)
+
+
+
+
+
+
+```
+Content: I see the "Create page" button is still disabled. This might be because the title field needs to be properly filled. Let me try typing the title again to make sure it's properly set.
+------------------------------
+ID: 34
+Message: Visited http://the-agent-company.com:8929/root/doc/-/wikis/HyperLogLog_project
+Content: I see the "Create page" button is still disabled. This might be because the title field needs to be properly filled. Let me try typing the title again to make sure it's properly set.
+------------------------------
+ID: 35
+Message: 
+Content: Perfect! The wiki page has been successfully created! I can see the success message "Wiki page was successfully created." and the URL shows `http://the-agent-company.com:8929/root/doc/-/wikis/HyperLogLog_project`. Now I need to save this URL to a file called `wiki_url.txt` in the `/workspace` directory.
+------------------------------
+ID: 36
+Message: I edited the file /workspace/wiki_url.txt.
+Content: Perfect! The wiki page has been successfully created! I can see the success message "Wiki page was successfully created." and the URL shows `http://the-agent-company.com:8929/root/doc/-/wikis/HyperLogLog_project`. Now I need to save this URL to a file called `wiki_url.txt` in the `/workspace` directory.
+------------------------------
