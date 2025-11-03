@@ -12,7 +12,7 @@ I have pre-processed each file to contain all necessary context at the very begi
 
 1.  **Task Description:** The full content from the original `task.md`.
 2.  **Scoring Criteria:** The full content from the original `checkpoints.md`.
-3.  **Scoring Results:** The full JSON content from the `eval_[task_name].json` file. This provides a detailed breakdown of all checkpoint scores, allowing you to see exactly where the agent lost points.
+3.  **Scoring Results:** The full JSON content from the `eval_[task_name]-image.json` file. This provides a detailed breakdown of all checkpoint scores, allowing you to see exactly where the agent lost points.
 4.  **Agent Log:** Following this header is the raw agent behavior log, containing the agent's internal "Message" and the "Content" from its LLM responses.
 
 ## Your Task
