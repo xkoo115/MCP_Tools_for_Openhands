@@ -27,3 +27,12 @@ hr-internal-tooling-slides
 pm-create-channel-new-leader
 sde-change-branch-policy
 sde-sotopia-create-agent
+admin-check-employees-budget-and-reply
+sde-delete-all-project-under-plane
+admin-ask-for-meeting-feedback
+example
+pm-monthly-attendance-slides
+pm-prepare-meeting-with-customers
+hr-make-slides-introduce-leadership
+sde-create-new-repo
+hr-collect-multiple-valid-passwords
