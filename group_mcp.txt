@@ -18,10 +18,6 @@ admin-read-survey-and-summarise
 ds-format-excel-sheets
 hr-new-grad-job-description-3
 pm-add-new-moderator
-pm-assign-issues
-pm-update-plane-issue-from-gitlab-status
-sde-find-answer-in-codebase-2
-sde-milestone-meeting
 sde-run-all-unit-test
 hr-internal-tooling-slides
 pm-create-channel-new-leader
@@ -36,3 +32,5 @@ pm-prepare-meeting-with-customers
 hr-make-slides-introduce-leadership
 sde-create-new-repo
 hr-collect-multiple-valid-passwords
+sde-write-a-unit-test-for-search_file-function
+hr-analyze-outing-bills
