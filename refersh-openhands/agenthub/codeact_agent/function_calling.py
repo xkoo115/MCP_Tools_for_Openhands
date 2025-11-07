@@ -216,17 +216,22 @@ def response_to_actions(
                 action = BrowseInteractiveAction(browser_actions=arguments['code'])
 
             # ================================================
-            # == 在这里添加你的新工具逻辑 ==
+            # == 修改这里的逻辑 ==
             # ================================================
             elif tool_call.function.name == SaveTaskDetailsTool['function']['name']:
-                if 'task_description' not in arguments:
+                if 'task_description' not in arguments or 'title' not in arguments:  # 1. 检查 title
                     raise FunctionCallValidationError(
-                        f'Missing required argument "task_description" in tool call {tool_call.function.name}'
+                        f'Missing required arguments in tool call {tool_call.function.name}'
                     )
-                action = SaveTaskAction(task_description=arguments['task_description'])
+                action = SaveTaskAction(
+                    title=arguments['title'],  # 2. 传递 title
+                    task_description=arguments['task_description']
+                )
 
             elif tool_call.function.name == RecallTaskDetailsTool['function']['name']:
-                action = RecallTaskAction()
+                action = RecallTaskAction(
+                    title=arguments.get('title', None)  # 3. 传递可选的 title
+                )
 
             # ================================================
             # MCPAction (MCP)
