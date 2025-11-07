@@ -1,34 +1,44 @@
 import json
 from litellm import ChatCompletionToolParam, ChatCompletionToolParamFunctionChunk
 
-# 定义任务保存工具的 "说明书"
+# 1. 修改 SaveTaskDetailsTool
 SaveTaskDetailsTool = ChatCompletionToolParam(
     type='function',
     function=ChatCompletionToolParamFunctionChunk(
         name='save_task_details',
-        description='Saves the verbatim (exact) text of a task to permanent local memory. Use this as your first action.',
+        description='Saves the verbatim (exact) text of a task or failure to permanent local memory under a specific title.',
         parameters={
             'type': 'object',
             'properties': {
+                'title': { # <-- 添加 title
+                    'type': 'string',
+                    'description': 'The title for the memory, in UpperCamelCase format (e.g., MyTaskDetails).',
+                },
                 'task_description': {
                     'type': 'string',
-                    'description': 'The exact, word-for-word task given by the user.',
+                    'description': 'The exact, word-for-word task or content to save.',
                 },
             },
-            'required': ['task_description'],
+            'required': ['title', 'task_description'], # <-- 'title' 现在是必需的
         },
     ),
 )
 
-# 定义任务回忆工具的 "说明书"
+# 2. 修改 RecallTaskDetailsTool
 RecallTaskDetailsTool = ChatCompletionToolParam(
     type='function',
     function=ChatCompletionToolParamFunctionChunk(
         name='recall_task_details',
-        description='Retrieves the original, verbatim task details from permanent local memory. Use this if you are unsure about the original goal.',
+        description='Retrieves memories. If no title is given, returns an outline (list) of all memory titles. If a title is given, returns the specific content for that title.',
         parameters={
             'type': 'object',
-            'properties': {}, # 此工具不需要参数
+            'properties': {
+                'title': { # <-- 添加 title
+                    'type': 'string',
+                    'description': 'The UpperCamelCase title of the memory to recall. If omitted, returns the outline.',
+                }
+            },
+            # 'required' 列表是空的，所以 title 是可选的
         },
     ),
 )
