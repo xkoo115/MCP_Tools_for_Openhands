@@ -70,6 +70,7 @@ from openhands.events.observation import (
     ErrorObservation,
     NullObservation,
     Observation,
+    AgentCondensationObservation,
 )
 from openhands.events.serialization.event import event_to_trajectory, truncate_content
 from openhands.llm.llm import LLM
@@ -471,18 +472,21 @@ class AgentController:
             await self.set_agent_state_to(AgentState.REJECTED)
 
         # ====================================================================
-        # == 这是你封装后的新逻辑 ==
+        # == 修改这里的逻辑 ==
         # ====================================================================
         elif isinstance(action, SaveTaskAction):
-            # 委托给处理器
-            obs_content = self.local_memory_handler.save_memory(action.task_description)
-            obs = Observation(content=obs_content)
+            # 1. 委托给 save_memory, 传递 title 和 description
+            obs_content = self.local_memory_handler.save_memory(
+                action.title,
+                action.task_description
+            )
+            obs = AgentCondensationObservation(content=obs_content)
             self.event_stream.add_event(obs, EventSource.AGENT)
 
         elif isinstance(action, RecallTaskAction):
-            # 委托给处理器
-            obs_content = self.local_memory_handler.recall_all_memories()
-            obs = Observation(content=obs_content)
+            # 2. 委托给 recall_memory, 传递 action.title (可能是 None)
+            obs_content = self.local_memory_handler.recall_memory(action.title)
+            obs = AgentCondensationObservation(content=obs_content)
             self.event_stream.add_event(obs, EventSource.AGENT)
 
 
