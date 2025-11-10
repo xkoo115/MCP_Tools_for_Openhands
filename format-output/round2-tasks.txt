@@ -1,0 +1,16 @@
+admin-translate-sales-chat
+ds-answer-numerical-data-question
+finance-nonqualified-bill-ask-for-reimburse
+sde-close-all-gitlab-issues
+sde-close-all-prs
+sde-delete-all-repos
+sde-summarize-recent-issues
+sde-update-readme
+finance-budget-variance
+finance-check-attendance-payroll
+sde-run-rising-wave-locally
+hr-delete-and-insert-user
+hr-check-for-invalid-passwords-and-ask-for-valid-passwords
+hr-get-valid-password
+pm-ask-for-issue-and-create-in-gitlab
+pm-present-engineer-group-members

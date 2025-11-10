@@ -1,0 +1,6 @@
+ds-visualize-data-in-pie-and-bar-chart
+sde-delete-all-project-under-plane
+hr-create-career-ladder
+sde-create-new-repo
+hr-collect-multiple-valid-passwords
+hr-make-slides-introduce-leadership
