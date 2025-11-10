@@ -49,6 +49,7 @@
 | pm-update-plane-issue-from-gitlab-status-image | 7 | 7 | 1.00 ⭐ | 24 | 0.35 |
 | pm-update-project-milestones-image | 5 | 5 | 1.00 ⭐ | 30 | 0.58 |
 | qa-update-issue-status-according-to-colleagues-image | 6 | 6 | 1.00 ⭐ | 35 | 0.51 |
+| sde-change-branch-policy-image | 2 | 2 | 1.00 ⭐ | 13 | 0.17 |
 | sde-change-license-easy-image | 4 | 4 | 1.00 ⭐ | 30 | 0.44 |
 | sde-change-license-hard-image | 3 | 3 | 1.00 ⭐ | 45 | 0.22 |
 | sde-close-all-gitlab-issues-image | 2 | 2 | 1.00 ⭐ | 63 | 1.33 |
@@ -113,7 +114,6 @@
 | finance-create-10k-income-report-image | 6 | 3 | 0.25 | 46 | 0.87 |
 | finance-substantial-presence-test-image | 2 | 1 | 0.25 | 31 | 0.19 |
 | hr-check-attendance-multiple-days-image | 4 | 2 | 0.25 | 28 | 0.42 |
-| sde-change-branch-policy-image | 2 | 1 | 0.25 | 18 | 0.27 |
 | sde-check-and-run-unit-test-image | 2 | 1 | 0.25 | 38 | 0.17 |
 | sde-create-new-characters-image | 4 | 2 | 0.25 | 40 | 0.20 |
 | sde-run-janusgraph-image | 6 | 3 | 0.25 | 46 | 0.52 |
@@ -186,11 +186,11 @@
 
 **Tasks Evaluated:** 175
 
-**Perfect Completions:** 74/175 (42.29%)
+**Perfect Completions:** 75/175 (42.86%)
 
-**Overall Score:** 51.97%
+**Overall Score:** 52.40%
 
-**Average Steps:** 29.94
+**Average Steps:** 29.91
 
 **Average Cost (USD):** 0.40
 
@@ -201,15 +201,15 @@
 |---------|--------|
 | Highest Task Score | 100.00% |
 | Lowest Task Score | 0.00% |
-| Median Task Score | 33.33% |
-| Average Task Score | 51.97% |
+| Median Task Score | 35.71% |
+| Average Task Score | 52.40% |
 
 ## Statistics per Nature Category
 
 | Metric | Value |
 |---------|--------|
-| Perfect Completions for sde | 31 (44.93%) |
-| Average Score for sde | 52.38% |
+| Perfect Completions for sde | 32 (46.38%) |
+| Average Score for sde | 53.47% |
 | Perfect Completions for pm | 16 (57.14%) |
 | Average Score for pm | 70.68% |
 | Perfect Completions for ds | 7 (50.00%) |
@@ -227,8 +227,8 @@
 
 | Metric | Value |
 |---------|--------|
-| Perfect Completions for gitlab | 30 (42.25%) |
-| Average Score for gitlab | 51.28% |
+| Perfect Completions for gitlab | 31 (43.66%) |
+| Average Score for gitlab | 52.33% |
 | Perfect Completions for plane | 9 (52.94%) |
 | Average Score for plane | 63.87% |
 | Perfect Completions for rocketchat | 32 (40.51%) |
